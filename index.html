@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Tandem — cycle sync for two</title>
+<style>
+  :root {
+    --bg: #221726;
+    --panel: #2c1b33;
+    --panel-2: #34213c;
+    --line: #4a3552;
+    --text: #f2e9e4;
+    --muted: #a794ab;
+    --rose: #d98b84;
+    --rose-rgb: 217, 139, 132;
+    --sage: #8fa687;
+    --gold: #d9b26b;
+  }
+  body.theme-partner {
+    --rose: #7c9cd1;
+    --rose-rgb: 124, 156, 209;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, #2a1a30, var(--bg) 60%);
+    color: var(--text);
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px 60px;
+  }
+  .app { width: 100%; max-width: 420px; }
+  .brand {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .brand .mark {
+    font-size: 26px;
+    letter-spacing: 6px;
+    font-weight: 700;
+    color: var(--rose);
+  }
+  .brand .tag {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-size: 16px;
+    margin: 0 0 4px;
+    font-weight: 700;
+  }
+  p.hint {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0 0 16px;
+  }
+  label {
+    display: block;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 11.5px;
+    letter-spacing: 0.4px;
+    color: var(--muted);
+    margin: 14px 0 6px;
+    text-transform: uppercase;
+  }
+  .role-toggle {
+    display: flex;
+    gap: 8px;
+  }
+  .role-toggle button {
+    flex: 1;
+    padding: 12px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .role-toggle button.active {
+    border-color: var(--rose);
+    background: rgba(var(--rose-rgb), 0.15);
+    color: var(--rose);
+  }
+  input, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px;
+  }
+  textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+  .row { display: flex; gap: 10px; }
+  .row > div { flex: 1; }
+  .btn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 13px;
+    border-radius: 8px;
+    border: none;
+    background: var(--rose);
+    color: #2a1417;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+  }
+  .btn.secondary {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .btn.small {
+    width: auto;
+    margin-top: 0;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .error {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 12px;
+    color: var(--rose);
+    margin-top: 10px;
+    display: none;
+  }
+  .dial-wrap { display: flex; justify-content: center; margin: 6px 0 4px; }
+  .dial-center { text-align: center; margin-top: -160px; pointer-events: none; }
+  .dial-day { font-size: 34px; font-weight: 700; }
+  .dial-phase {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 12.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .expect {
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin: 18px 0 4px;
+  }
+  ul.suggestions {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text);
+    padding-left: 20px;
+    margin: 10px 0 0;
+  }
+  ul.suggestions li { margin-bottom: 4px; }
+  .badge {
+    display: inline-block;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+  }
+  .note-meta {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .note-text {
+    font-size: 14.5px;
+    font-style: italic;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .divider { height: 1px; background: var(--line); margin: 18px 0; }
+  .foot-link {
+    text-align: center;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .foot-link a { color: var(--rose); cursor: pointer; text-decoration: underline; }
+  .disclaimer {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 10.5px;
+    color: var(--muted);
+    line-height: 1.5;
+    text-align: center;
+    margin-top: 18px;
+  }
+  .hidden { display: none !important; }
+  .spinner-row {
+    text-align: center;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 12.5px;
+    color: var(--muted);
+    padding: 30px 0;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand">
+    <div class="mark">TANDEM</div>
+    <div class="tag">cycle sync for two</div>
+  </div>
+
+  <div id="loading" class="card spinner-row">Loading…</div>
+
+  <!-- SETUP -->
+  <div id="setup" class="card hidden">
+    <h2>Get set up</h2>
+    <p class="hint">One shared code connects both of you. The code isn't secret-grade encryption — anyone who has it can read this couple's data, so pick something the two of you agree on, not something guessable off your names alone.</p>
+
+    <label>I'm the one...</label>
+    <div class="role-toggle">
+      <button id="roleTrackBtn" class="active">Tracking my cycle</button>
+      <button id="roleFollowBtn">Supporting my partner</button>
+    </div>
+
+    <label for="codeInput">Shared pairing code</label>
+    <input id="codeInput" type="text" placeholder="e.g. maple-harbor-42" autocomplete="off" />
+
+    <div id="trackerFields">
+      <label for="lastPeriod">First day of most recent period</label>
+      <input id="lastPeriod" type="date" />
+      <div class="row">
+        <div>
+          <label for="cycleLen">Average cycle length (days)</label>
+          <input id="cycleLen" type="number" min="18" max="45" value="28" />
+        </div>
+        <div>
+          <label for="periodLen">Typical period length (days)</label>
+          <input id="periodLen" type="number" min="1" max="10" value="5" />
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" id="saveSetupBtn">Save & continue</button>
+    <div class="error" id="setupError">Enter a pairing code to continue.</div>
+  </div>
+
+  <!-- WAITING FOR DATA -->
+  <div id="waiting" class="card hidden">
+    <h2>Waiting on your partner</h2>
+    <p class="hint">No cycle data yet under this code. Ask them to open Tandem, choose "Tracking my cycle," and enter the same pairing code.</p>
+    <button class="btn secondary small" id="refreshBtn">Check again</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="card hidden">
+    <div class="dial-wrap">
+      <svg id="dial" width="240" height="240" viewBox="0 0 240 240"></svg>
+    </div>
+    <div class="dial-center">
+      <div class="dial-day" id="dayLabel">—</div>
+      <div class="dial-phase" id="phaseLabel">—</div>
+    </div>
+
+    <div class="expect" id="expectText"></div>
+    <ul class="suggestions" id="suggestList"></ul>
+  </div>
+
+  <div id="noteCard" class="card hidden">
+    <h2>Right now, from her</h2>
+    <p class="hint">Phase patterns are generalizations — this note is the real signal. Either of you can update it any time.</p>
+    <div id="currentNoteBlock" class="hidden">
+      <div class="note-text" id="currentNoteText"></div>
+      <div class="note-meta" id="currentNoteMeta"></div>
+    </div>
+    <div class="divider"></div>
+    <label for="noteInput">Update the note</label>
+    <textarea id="noteInput" placeholder="e.g. Low energy today, could use quiet evening + tea"></textarea>
+    <button class="btn small" id="saveNoteBtn" style="margin-top:12px;">Post update</button>
+  </div>
+
+  <div id="trackerActions" class="card hidden">
+    <h2>Log &amp; adjust</h2>
+    <button class="btn secondary small" id="logTodayBtn">Log today as day 1 (period started)</button>
+    <div class="divider"></div>
+    <label for="editCycleLen">Average cycle length</label>
+    <div class="row">
+      <div>
+        <input id="editCycleLen" type="number" min="18" max="45" />
+      </div>
+      <div>
+        <input id="editPeriodLen" type="number" min="1" max="10" />
+      </div>
+    </div>
+    <button class="btn secondary small" id="saveEditBtn" style="margin-top:12px;">Save changes</button>
+  </div>
+
+  <div class="foot-link hidden" id="switchLink">
+    <a id="switchAction">Change code / role</a>
+  </div>
+
+  <div class="disclaimer">
+    General patterns, not a diagnosis or a prediction of how she actually feels — individual variation is large. When in doubt, ask her directly.
+  </div>
+</div>
+
+<script>
+(function () {
+  const els = {
+    loading: document.getElementById('loading'),
+    setup: document.getElementById('setup'),
+    waiting: document.getElementById('waiting'),
+    dashboard: document.getElementById('dashboard'),
+    noteCard: document.getElementById('noteCard'),
+    trackerActions: document.getElementById('trackerActions'),
+    switchLink: document.getElementById('switchLink'),
+  };
+
+  const PHASES = {
+    menstrual: {
+      label: 'Menstrual',
+      color: '#c1523b',
+      expect: 'Energy is often lower here, with cramping or fatigue common — though this varies a lot person to person.',
+      suggestions: [
+        'Keep pain relief and a heating pad stocked',
+        'Have pads/tampons or her preferred product on hand',
+        'Offer to take low-key plans (in vs. out)',
+        'Pick up any grocery or errand slack this week',
+      ],
+    },
+    follicular: {
+      label: 'Follicular',
+      color: '#8fa687',
+      expect: 'Energy tends to climb through this window for a lot of people.',
+      suggestions: [
+        'Good window for more active plans or errands together',
+        'Less accommodation typically needed here',
+      ],
+    },
+    ovulation: {
+      label: 'Ovulation',
+      color: '#d9b26b',
+      expect: 'Some people notice a small energy peak, and a few get brief mild pelvic twinges.',
+      suggestions: [
+        'Fine for higher-energy plans',
+        "Keep the heating pad handy just in case of a twinge",
+      ],
+    },
+    luteal: {
+      label: 'Luteal',
+      color: '#9c8aa0',
+      expect: 'Energy is often steady but can start gradually tapering.',
+      suggestions: [
+        'Nothing special usually needed — check the note below',
+      ],
+    },
+    lateLuteal: {
+      label: 'Late luteal (PMS window)',
+      color: '#d98b84',
+      expect: 'PMS-type symptoms are common here — mood shifts, bloating, cravings, fatigue — though it varies widely and not everyone gets them.',
+      suggestions: [
+        'Stock comfort snacks / cravings she likes',
+        'Build in flexibility for plans this week',
+        'Extra patience is appreciated more than fixes',
+        'Ask directly what would help rather than guessing',
+      ],
+    },
+  };
+
+  let profile = null; // { role: 'tracker'|'partner', code: string }
+  let cycle = null;   // { lastPeriodStart, cycleLength, periodLength }
+
+  function show(id) {
+    Object.values(els).forEach(e => e.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function daysBetween(a, b) {
+    const ms = b.setHours(0,0,0,0) - a.setHours(0,0,0,0);
+    return Math.floor(ms / 86400000);
+  }
+
+  function computeBoundaries(cycleLength, periodLength) {
+    const ov = Math.max(periodLength + 3, cycleLength - 14);
+    return {
+      ov,
+      menstrualEnd: periodLength,
+      follicularEnd: Math.max(periodLength, ov - 2),
+      ovulationEnd: Math.min(cycleLength - 1, ov + 1),
+      lutealEnd: Math.max(ov + 1, cycleLength - 5),
+    };
+  }
+
+  function phaseForDay(day, cycleLength, periodLength) {
+    const b = computeBoundaries(cycleLength, periodLength);
+    if (day <= b.menstrualEnd) return 'menstrual';
+    if (day <= b.follicularEnd) return 'follicular';
+    if (day <= b.ovulationEnd) return 'ovulation';
+    if (day <= b.lutealEnd) return 'luteal';
+    return 'lateLuteal';
+  }
+
+  function currentDay() {
+    const start = new Date(cycle.lastPeriodStart + 'T00:00:00');
+    const today = new Date();
+    let diff = daysBetween(new Date(start), today) % cycle.cycleLength;
+    if (diff < 0) diff += cycle.cycleLength;
+    return diff + 1;
+  }
+
+  // ---- SVG dial ----
+  function polar(cx, cy, r, angleDeg) {
+    const a = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+  }
+
+  function arcPath(cx, cy, r, startDay, endDay, cycleLength) {
+    const startAngle = ((startDay - 1) / cycleLength) * 360;
+    const endAngle = (endDay / cycleLength) * 360;
+    const s = polar(cx, cy, r, startAngle);
+    const e = polar(cx, cy, r, endAngle);
+    const large = endAngle - startAngle > 180 ? 1 : 0;
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
+  }
+
+  function renderDial(day, cycleLength, periodLength) {
+    const svg = document.getElementById('dial');
+    svg.innerHTML = '';
+    const cx = 120, cy = 120, r = 92;
+
+    const b = computeBoundaries(cycleLength, periodLength);
+    const segments = [
+      ['menstrual', 1, b.menstrualEnd],
+      ['follicular', b.menstrualEnd + 1, b.follicularEnd],
+      ['ovulation', b.follicularEnd + 1, b.ovulationEnd],
+      ['luteal', b.ovulationEnd + 1, b.lutealEnd],
+      ['lateLuteal', b.lutealEnd + 1, cycleLength],
+    ];
+
+    segments.forEach(([key, s, e]) => {
+      if (e < s) return;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', arcPath(cx, cy, r, s, e, cycleLength));
+      path.setAttribute('stroke', PHASES[key].color);
+      path.setAttribute('stroke-width', '16');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'butt');
+      path.setAttribute('opacity', '0.85');
+      svg.appendChild(path);
+    });
+
+    // track base circle (subtle)
+    const base = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    base.setAttribute('cx', cx); base.setAttribute('cy', cy); base.setAttribute('r', r);
+    base.setAttribute('fill', 'none');
+    base.setAttribute('stroke', 'rgba(255,255,255,0.05)');
+    base.setAttribute('stroke-width', '16');
+    svg.insertBefore(base, svg.firstChild);
+
+    // current-day marker
+    const angle = ((day - 0.5) / cycleLength) * 360;
+    const m = polar(cx, cy, r, angle);
+    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    marker.setAttribute('cx', m.x); marker.setAttribute('cy', m.y); marker.setAttribute('r', 8);
+    marker.setAttribute('fill', '#f2e9e4');
+    marker.setAttribute('stroke', '#221726');
+    marker.setAttribute('stroke-width', '2');
+    svg.appendChild(marker);
+  }
+
+  function renderDashboard() {
+    const day = currentDay();
+    const phaseKey = phaseForDay(day, cycle.cycleLength, cycle.periodLength);
+    const phase = PHASES[phaseKey];
+
+    renderDial(day, cycle.cycleLength, cycle.periodLength);
+    document.getElementById('dayLabel').textContent = 'Day ' + day;
+    document.getElementById('phaseLabel').textContent = phase.label;
+    document.getElementById('phaseLabel').style.color = phase.color;
+    document.getElementById('expectText').textContent = phase.expect;
+
+    const list = document.getElementById('suggestList');
+    list.innerHTML = '';
+    phase.suggestions.forEach(s => {
+      const li = document.createElement('li');
+      li.textContent = s;
+      list.appendChild(li);
+    });
+
+    els.dashboard.classList.remove('hidden');
+    els.noteCard.classList.remove('hidden');
+    els.switchLink.classList.remove('hidden');
+
+    if (profile.role === 'tracker') {
+      document.getElementById('editCycleLen').value = cycle.cycleLength;
+      document.getElementById('editPeriodLen').value = cycle.periodLength;
+      els.trackerActions.classList.remove('hidden');
+    }
+  }
+
+  async function loadNote() {
+    try {
+      const res = await window.storage.get('couple:' + profile.code + ':note', true);
+      if (res && res.value) {
+        const note = JSON.parse(res.value);
+        document.getElementById('currentNoteText').textContent = '"' + note.text + '"';
+        const when = new Date(note.timestamp);
+        document.getElementById('currentNoteMeta').textContent =
+          '— updated ' + when.toLocaleDateString() + ' ' + when.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('currentNoteBlock').classList.remove('hidden');
+      }
+    } catch (e) { /* no note yet */ }
+  }
+
+  async function saveNote() {
+    const text = document.getElementById('noteInput').value.trim();
+    if (!text) return;
+    const note = { text, timestamp: Date.now(), author: profile.role };
+    await window.storage.set('couple:' + profile.code + ':note', JSON.stringify(note), true);
+    document.getElementById('noteInput').value = '';
+    loadNote();
+  }
+
+  async function loadCycle() {
+    try {
+      const res = await window.storage.get('couple:' + profile.code + ':cycle', true);
+      if (res && res.value) {
+        cycle = JSON.parse(res.value);
+        return true;
+      }
+    } catch (e) { /* no cycle data yet */ }
+    return false;
+  }
+
+  async function saveCycle(newCycle) {
+    cycle = newCycle;
+    await window.storage.set('couple:' + profile.code + ':cycle', JSON.stringify(cycle), true);
+  }
+
+  async function saveProfile(p) {
+    profile = p;
+    try { await window.storage.set('device:profile', JSON.stringify(p), false); }
+    catch (e) { console.error('profile save failed', e); }
+  }
+
+  async function loadProfile() {
+    try {
+      const res = await window.storage.get('device:profile', false);
+      if (res && res.value) return JSON.parse(res.value);
+    } catch (e) { /* not set yet */ }
+    return null;
+  }
+
+  async function boot() {
+    profile = await loadProfile();
+    if (!profile) { show('setup'); return; }
+    document.body.classList.toggle('theme-partner', profile.role === 'partner');
+
+    const hasCycle = await loadCycle();
+    if (!hasCycle) {
+      if (profile.role === 'tracker') {
+        show('setup'); // fall through to setup so they can enter cycle info
+        prefillSetupFromProfile();
+      } else {
+        show('waiting');
+      }
+      return;
+    }
+    renderDashboard();
+    loadNote();
+    document.getElementById('setup').classList.add('hidden');
+    document.getElementById('waiting').classList.add('hidden');
+    document.getElementById('loading').classList.add('hidden');
+    els.dashboard.classList.remove('hidden');
+    els.noteCard.classList.remove('hidden');
+    els.switchLink.classList.remove('hidden');
+  }
+
+  function prefillSetupFromProfile() {
+    document.getElementById('codeInput').value = profile.code;
+    setRole(profile.role);
+  }
+
+  let selectedRole = 'tracker';
+  function setRole(role) {
+    selectedRole = role;
+    document.getElementById('roleTrackBtn').classList.toggle('active', role === 'tracker');
+    document.getElementById('roleFollowBtn').classList.toggle('active', role === 'partner');
+    document.getElementById('trackerFields').classList.toggle('hidden', role !== 'tracker');
+    document.body.classList.toggle('theme-partner', role === 'partner');
+  }
+
+  document.getElementById('roleTrackBtn').addEventListener('click', () => setRole('tracker'));
+  document.getElementById('roleFollowBtn').addEventListener('click', () => setRole('partner'));
+
+  document.getElementById('saveSetupBtn').addEventListener('click', async () => {
+    const code = document.getElementById('codeInput').value.trim().toLowerCase().replace(/\s+/g, '-');
+    const errEl = document.getElementById('setupError');
+    if (!code) { errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+
+    await saveProfile({ role: selectedRole, code });
+
+    if (selectedRole === 'tracker') {
+      const lastPeriod = document.getElementById('lastPeriod').value;
+      const cycleLen = parseInt(document.getElementById('cycleLen').value, 10) || 28;
+      const periodLen = parseInt(document.getElementById('periodLen').value, 10) || 5;
+      if (!lastPeriod) { errEl.textContent = 'Enter the first day of your most recent period.'; errEl.style.display = 'block'; return; }
+      await saveCycle({ lastPeriodStart: lastPeriod, cycleLength: cycleLen, periodLength: periodLen });
+      show('dashboard');
+      renderDashboard();
+      loadNote();
+      els.dashboard.classList.remove('hidden');
+      els.noteCard.classList.remove('hidden');
+      els.switchLink.classList.remove('hidden');
+    } else {
+      const hasCycle = await loadCycle();
+      if (hasCycle) {
+        renderDashboard();
+        loadNote();
+        els.dashboard.classList.remove('hidden');
+        els.noteCard.classList.remove('hidden');
+        els.switchLink.classList.remove('hidden');
+      } else {
+        show('waiting');
+      }
+    }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', async () => {
+    const hasCycle = await loadCycle();
+    if (hasCycle) {
+      renderDashboard();
+      loadNote();
+      els.dashboard.classList.remove('hidden');
+      els.noteCard.classList.remove('hidden');
+      els.switchLink.classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('saveNoteBtn').addEventListener('click', saveNote);
+
+  document.getElementById('logTodayBtn').addEventListener('click', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await saveCycle({ ...cycle, lastPeriodStart: today });
+    renderDashboard();
+  });
+
+  document.getElementById('saveEditBtn').addEventListener('click', async () => {
+    const cycleLen = parseInt(document.getElementById('editCycleLen').value, 10) || cycle.cycleLength;
+    const periodLen = parseInt(document.getElementById('editPeriodLen').value, 10) || cycle.periodLength;
+    await saveCycle({ ...cycle, cycleLength: cycleLen, periodLength: periodLen });
+    renderDashboard();
+  });
+
+  document.getElementById('switchAction').addEventListener('click', async () => {
+    try { await window.storage.delete('device:profile', false); } catch (e) {}
+    profile = null; cycle = null;
+    document.getElementById('codeInput').value = '';
+    setRole('tracker');
+    document.getElementById('lastPeriod').value = '';
+    show('setup');
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
